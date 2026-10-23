@@ -1,0 +1,26 @@
+# =====================================================================
+# ALCANCE AUTORIZADO (scope) - SeguraSQL
+# ---------------------------------------------------------------------
+# Anade aqui los objetivos para los que tienes autorizacion escrita.
+# Solo se podran escanear hosts que coincidan con estas entradas.
+#
+# Formatos admitidos (uno por linea):
+#   ejemplo.com          -> dominio exacto
+#   *.ejemplo.com        -> dominio y todos sus subdominios
+#   192.168.1.10         -> IP exacta
+#   10.0.0.0/24          -> rango CIDR
+#
+# Las lineas que empiezan por # se ignoran.
+# Si el archivo esta vacio (o todo son comentarios), NO hay restriccion
+# de alcance y la aplicacion mostrara una advertencia.
+# =====================================================================
+
+# Entornos de laboratorio y practica habituales (descomenta si los usas):
+localhost
+127.0.0.1
+*.local
+testphp.vulnweb.com
+# *.vulnweb.com
+
+# Wargames / retos de practica
+webhacking.kr

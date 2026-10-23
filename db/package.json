@@ -1,0 +1,17 @@
+{
+  "name": "@utm-desk/db",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./catalogo": "./schema/catalogo.js"
+  },
+  "scripts": {
+    "init": "node init.mjs",
+    "seed": "node seed.mjs"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.2",
+    "mongodb": "^6.20.0"
+  }
+}

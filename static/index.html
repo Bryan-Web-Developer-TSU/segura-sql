@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="data:,">
+  <title>SeguraSQL — Pentesting SQL autorizado</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <header>
+    <div class="header-left">
+      <h1>🛡️ SeguraSQL</h1>
+      <p class="subtitle">Panel de pruebas de inyección SQL basado en <strong>sqlmap</strong></p>
+    </div>
+    <div id="health" class="badge badge-gray">conectando…</div>
+  </header>
+
+  <div class="legal-banner">
+    ⚠️ <strong>Solo para uso autorizado.</strong> Esta herramienta debe utilizarse únicamente contra
+    sistemas sobre los que tengas autorización explícita y por escrito. El acceso no autorizado a
+    sistemas informáticos es delito. Todas las acciones quedan registradas en <code>logs/audit.log</code>.
+  </div>
+
+  <div id="scope-banner" class="scope-banner hidden"></div>
+
+  <main>
+    <section class="card">
+      <h2>Nuevo escaneo</h2>
+      <form id="scan-form">
+        <fieldset>
+          <legend>Objetivo</legend>
+          <label class="full">URL objetivo *
+            <input type="text" id="url" placeholder="http://objetivo.local/pagina.php?id=1" required>
+          </label>
+          <div class="grid-2">
+            <label>Método HTTP
+              <select id="method">
+                <option value="">Automático</option>
+                <option>GET</option>
+                <option>POST</option>
+                <option>PUT</option>
+                <option>PATCH</option>
+                <option>DELETE</option>
+              </select>
+            </label>
+            <label>Datos POST (opcional)
+              <input type="text" id="data" placeholder="usuario=test&amp;clave=test">
+            </label>
+          </div>
+        </fieldset>
+
+        <details>
+          <summary>Opciones HTTP</summary>
+          <div class="grid-2">
+            <label>Cookie
+              <input type="text" id="cookie" placeholder="PHPSESSID=abc123; rol=usuario">
+            </label>
+            <label>Referer
+              <input type="text" id="referer">
+            </label>
+            <label>User-Agent personalizado
+              <input type="text" id="agent">
+            </label>
+            <label>Proxy (http://host:puerto)
+              <input type="text" id="proxy">
+            </label>
+          </div>
+          <label class="full">Cabeceras extra (una por línea: <code>Nombre: valor</code>)
+            <textarea id="headers" rows="2" placeholder="X-Token: abc123"></textarea>
+          </label>
+          <label class="checkbox"><input type="checkbox" id="randomAgent"> User-Agent aleatorio</label>
+        </details>
+
+        <details open>
+          <summary>Detección e inyección</summary>
+          <div class="grid-3">
+            <label>Nivel (1-5)
+              <select id="level">
+                <option value="1" selected>1 — por defecto</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+                <option value="5">5 — máximo</option>
+              </select>
+            </label>
+            <label>Riesgo (1-3)
+              <select id="risk">
+                <option value="1" selected>1 — por defecto</option>
+                <option value="2">2</option>
+                <option value="3">3 — puede modificar datos</option>
+              </select>
+            </label>
+            <label>DBMS (si lo conoces)
+              <input type="text" id="dbms" placeholder="MySQL, PostgreSQL…">
+            </label>
+          </div>
+          <div class="checkbox-row">
+            <span class="row-label">Técnicas:</span>
+            <label class="checkbox"><input type="checkbox" class="tech" value="B" checked> B (booleana)</label>
+            <label class="checkbox"><input type="checkbox" class="tech" value="E" checked> E (error)</label>
+            <label class="checkbox"><input type="checkbox" class="tech" value="U" checked> U (UNION)</label>
+            <label class="checkbox"><input type="checkbox" class="tech" value="S" checked> S (apilada)</label>
+            <label class="checkbox"><input type="checkbox" class="tech" value="T" checked> T (tiempo)</label>
+            <label class="checkbox"><input type="checkbox" class="tech" value="Q" checked> Q (inline)</label>
+          </div>
+          <div class="grid-2">
+            <label>Parámetro de prueba
+              <input type="text" id="testParameter" placeholder="id">
+            </label>
+            <label>Scripts tamper (separados por comas)
+              <input type="text" id="tamper" placeholder="between,randomcase">
+            </label>
+            <label>Prefijo del payload
+              <input type="text" id="prefix">
+            </label>
+            <label>Sufijo del payload
+              <input type="text" id="suffix">
+            </label>
+          </div>
+          <div class="checkbox-row">
+            <label class="checkbox"><input type="checkbox" id="textOnly"> Comparar solo texto</label>
+            <label class="checkbox"><input type="checkbox" id="titles"> Comparar títulos</label>
+          </div>
+        </details>
+
+        <details open>
+          <summary>Enumeración</summary>
+          <div class="checkbox-row wrap">
+            <label class="checkbox"><input type="checkbox" id="getBanner"> Banner</label>
+            <label class="checkbox"><input type="checkbox" id="getCurrentUser"> Usuario actual</label>
+            <label class="checkbox"><input type="checkbox" id="getCurrentDb"> BD actual</label>
+            <label class="checkbox"><input type="checkbox" id="getHostname"> Hostname</label>
+            <label class="checkbox"><input type="checkbox" id="isDba"> ¿Es DBA?</label>
+            <label class="checkbox"><input type="checkbox" id="getDbs"> Bases de datos</label>
+            <label class="checkbox"><input type="checkbox" id="getTables"> Tablas</label>
+            <label class="checkbox"><input type="checkbox" id="getColumns"> Columnas</label>
+            <label class="checkbox"><input type="checkbox" id="getSchema"> Esquema</label>
+            <label class="checkbox"><input type="checkbox" id="getCount"> Nº de registros</label>
+            <label class="checkbox"><input type="checkbox" id="getUsers"> Usuarios</label>
+            <label class="checkbox"><input type="checkbox" id="getPasswordHashes"> Hashes de contraseñas</label>
+            <label class="checkbox"><input type="checkbox" id="getPrivileges"> Privilegios</label>
+            <label class="checkbox"><input type="checkbox" id="getRoles"> Roles</label>
+            <label class="checkbox"><input type="checkbox" id="getComments"> Comentarios</label>
+          </div>
+          <div class="grid-3">
+            <label>Base de datos (-D)
+              <input type="text" id="db">
+            </label>
+            <label>Tabla (-T)
+              <input type="text" id="tbl">
+            </label>
+            <label>Columna (-C)
+              <input type="text" id="col">
+            </label>
+          </div>
+          <label class="checkbox"><input type="checkbox" id="excludeSysDbs"> Excluir bases de datos del sistema</label>
+        </details>
+
+        <details>
+          <summary>Extracción de datos</summary>
+          <div class="checkbox-row">
+            <label class="checkbox"><input type="checkbox" id="dumpTable"> Volcar tabla (dump)</label>
+            <label class="checkbox"><input type="checkbox" id="dumpAll"> Volcar todo (dump-all)</label>
+            <label>Formato
+              <select id="dumpFormat">
+                <option value="">CSV (por defecto)</option>
+                <option value="HTML">HTML</option>
+                <option value="SQLITE">SQLite</option>
+              </select>
+            </label>
+          </div>
+          <label class="checkbox highlight">
+            <input type="checkbox" id="allowDataExtraction">
+            <strong>Autorizo la extracción de datos</strong> — mi autorización cubre la lectura y descarga
+            de información de la base de datos
+          </label>
+        </details>
+
+        <details>
+          <summary>Rendimiento y sesión</summary>
+          <div class="grid-3">
+            <label>Hilos (1-10)
+              <input type="number" id="threads" min="1" max="10" placeholder="1">
+            </label>
+            <label>Retardo entre peticiones (s)
+              <input type="number" id="delay" min="0" max="60" step="0.5" placeholder="0">
+            </label>
+            <label>Timeout (s)
+              <input type="number" id="timeout" min="1" max="300" placeholder="30">
+            </label>
+            <label>Reintentos (0-10)
+              <input type="number" id="retries" min="0" max="10" placeholder="3">
+            </label>
+            <label>Profundidad de rastreo (0-10)
+              <input type="number" id="crawlDepth" min="0" max="10" placeholder="0">
+            </label>
+          </div>
+          <div class="checkbox-row">
+            <label class="checkbox"><input type="checkbox" id="forms"> Probar formularios</label>
+            <label class="checkbox"><input type="checkbox" id="flushSession"> Ignorar sesión previa</label>
+            <label class="checkbox"><input type="checkbox" id="freshQueries"> No usar caché de consultas</label>
+          </div>
+        </details>
+
+        <fieldset>
+          <legend>Modo de ejecución</legend>
+          <label class="checkbox">
+            <input type="checkbox" id="safeMode" checked>
+            🛡️ <strong>Modo seguro</strong> (recomendado): bloquea ejecución de comandos, escritura de
+            archivos, SQL arbitrario y riesgo 3
+          </label>
+          <div id="advanced-section" class="advanced hidden">
+            <p class="warning">
+              ⚠️ <strong>Modo avanzado.</strong> Estas opciones pueden ejecutar código, leer archivos o
+              modificar el sistema objetivo. Úsalas solo si tu autorización las cubre expresamente.
+            </p>
+            <label class="checkbox"><input type="checkbox" id="osShell"> osShell — shell del sistema operativo</label>
+            <label class="checkbox"><input type="checkbox" id="osPwn"> osPwn — canal out-of-band (Meterpreter/VNC)</label>
+            <div class="grid-3">
+              <label>osCmd — comando a ejecutar
+                <input type="text" id="osCmd" placeholder="whoami">
+              </label>
+              <label>fileRead — archivo a leer
+                <input type="text" id="fileRead" placeholder="/etc/passwd">
+              </label>
+              <label>sqlQuery — sentencia SQL
+                <input type="text" id="sqlQuery" placeholder="SELECT version()">
+              </label>
+            </div>
+            <label class="checkbox highlight">
+              <input type="checkbox" id="advancedAcknowledged">
+              <strong>Comprendo los riesgos</strong> y confirmo que mi autorización cubre estas técnicas
+            </label>
+          </div>
+        </fieldset>
+
+        <fieldset class="authorization">
+          <legend>Autorización (obligatoria)</legend>
+          <label class="checkbox">
+            <input type="checkbox" id="authConfirmed" required>
+            Confirmo que tengo <strong>autorización explícita y por escrito</strong> del propietario del
+            sistema para realizar estas pruebas
+          </label>
+          <label class="full">Referencia de autorización (ticket, contrato, orden de trabajo)
+            <input type="text" id="authReference" placeholder="Ej.: OT-2026-0142">
+          </label>
+        </fieldset>
+
+        <div id="form-errors" class="errors hidden"></div>
+        <button type="submit" id="start-btn">▶ Iniciar escaneo</button>
+      </form>
+    </section>
+
+    <section class="card">
+      <h2>Escaneos</h2>
+      <table id="scans-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Objetivo</th>
+            <th>Estado</th>
+            <th>Inicio</th>
+            <th>Modo</th>
+          </tr>
+        </thead>
+        <tbody id="scans-tbody">
+          <tr><td colspan="5" class="muted">Sin escaneos todavía</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card hidden" id="detail-card">
+      <div class="detail-header">
+        <h2>Detalle del escaneo</h2>
+        <div class="detail-actions">
+          <button id="btn-stop" title="Detiene el escaneo de forma controlada">⏸ Detener</button>
+          <button id="btn-kill" title="Termina el proceso inmediatamente">⏹ Forzar parada</button>
+          <button id="btn-delete" class="danger" title="Elimina la tarea y sus datos">🗑 Eliminar</button>
+          <button id="btn-close">✖ Cerrar</button>
+        </div>
+      </div>
+      <div id="detail-meta" class="detail-meta"></div>
+      <h3>Consola</h3>
+      <div id="log-console" class="console"></div>
+      <h3>Resultados</h3>
+      <div id="results" class="results"></div>
+    </section>
+  </main>
+
+  <footer>
+    SeguraSQL · basado en <a href="https://github.com/sqlmapproject/sqlmap" target="_blank" rel="noopener">sqlmap</a> ·
+    auditoría en <code>logs/audit.log</code>
+  </footer>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
